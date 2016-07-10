@@ -1,14 +1,12 @@
 package mediasci.com.outdoordemo;
 
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.ParcelFileDescriptor;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -19,11 +17,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
-import java.io.FileDescriptor;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import mediasci.com.Util.CameraUtil;
 import mediasci.com.Util.DBUtil;
@@ -34,24 +28,22 @@ import mediasci.com.models.AdvertiseDB;
 
 public class AdvertiseActivity extends AppCompatActivity implements View.OnClickListener {
 
+    public static final String url = "http://192.168.1.236:8084/OutdoorsAds/rest/mobile/uploadSign";
+    public static String token =
+            "IoUDlBfRCKrNu9kl1h1Ilekj5WhY1nv5UJYbZb69VRyfcrb8H6tHhZ61hwSNT1Wu";
+    double latitude = 0, longitude = 0;
+    Bitmap bitmap;
+    String gps_address, address, title, note, json;
+    boolean revise;
+    int click_type;
+    Advertise advertise;
     private ImageView img_camera;
     private EditText et_gps_address, et_address, et_title, et_note;
     private Spinner spnr_type;
     private CheckBox chk_revise;
     private Button btn_send, btn_save;
     private int type = 1;
-    public static String token =
-            "IoUDlBfRCKrNu9kl1h1Ilekj5WhY1nv5UJYbZb69VRyfcrb8H6tHhZ61hwSNT1Wu";
-    public static final String url = "http://192.168.1.236:8084/OutdoorsAds/rest/mobile/uploadSign";
     private byte[] img;
-    double latitude = 0, longitude = 0;
-
-    Bitmap bitmap;
-    String gps_address, address, title, note, json;
-    boolean revise;
-    int click_type;
-    Advertise advertise;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,43 +53,6 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
         SetupTools();
         GetImage();
     }
-
-    private void GetImage() {
-        Bundle bundle = getIntent().getExtras();
-        //if (bundle.containsKey("file")) {
-
-        Uri file_uri = CameraUtil.fileUri; //(Uri) bundle.get("file");
-        if (bundle.get("type") == MainActivity.Camera) {
-            BitmapFactory.Options options = new BitmapFactory.Options();
-
-            // downsizing image as it throws OutOfMemory Exception for larger
-            // images
-            options.inSampleSize = 5;// if less size increase
-
-            bitmap = BitmapFactory.decodeFile(file_uri.getPath(),
-                    options);
-
-
-        } else {
-            try {
-                uriToBitmap(file_uri);
-                // bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),
-                //       file_uri);
-                // uriToBitmap(file_uri);
-            } catch (Exception e) {
-                Log.e("gallery_error", e + "");
-            }
-
-
-        }
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-        img = stream.toByteArray();
-        img_camera.setImageBitmap(bitmap);
-        //}
-
-    }
-
 
     private void SetupTools() {
         img_camera = (ImageView) findViewById(R.id.img_camera);
@@ -113,7 +68,7 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
         btn_save.setOnClickListener(this);
 
         String[] typeItems = getResources().getStringArray(R.array.type_items);
-        spnr_type.setAdapter(new ArrayAdapter<String>(this,
+        spnr_type.setAdapter(new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1
                 , typeItems));
 
@@ -132,6 +87,68 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
         });
     }
 
+    private void GetImage() {
+        Bundle bundle = getIntent().getExtras();
+        //if (bundle.containsKey("file")) {
+
+        Uri file_uri = CameraUtil.fileUri; //(Uri) bundle.get("file");
+        if (bundle.get("type") == MainActivity.Camera) {
+            //BitmapFactory.Options options = new BitmapFactory.Options();
+
+            // downsizing image as it throws OutOfMemory Exception for larger
+            // images
+
+            // options.inSampleSize = 5;// if less size increase
+
+            bitmap = BitmapFactory.decodeFile(file_uri.getPath());
+            // getbitmap(file_uri);
+
+        } else {
+            try {
+                //uriToBitmap(file_uri);
+                bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(),
+                        file_uri);
+                // uriToBitmap(file_uri);
+                // getbitmap(file_uri);
+            } catch (Exception e) {
+                Log.e("gallery_error", e + "");
+            }
+
+
+        }
+        //  Log.e("image", "converted");
+
+        //ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        // bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        //img = stream.toByteArray();
+
+
+        // convert bitmap to byte[] quick
+        // ByteBuffer byteBuffer = ByteBuffer.allocate(bitmap.getByteCount());
+        //bitmap.copyPixelsToBuffer(byteBuffer);
+        //img = byteBuffer.array();
+
+        Log.e("image", "view");
+        img_camera.setImageBitmap(bitmap);
+
+        //}
+
+    }
+
+
+   
+
+    @Override
+    public void onClick(View v) {
+
+        if (v == btn_send) {
+            click_type = 1;
+        } else if (v == btn_save) {
+            click_type = 2;
+        }
+        GetData();
+    }
+
     private void GetData() {
         GPSTracker gpsTracker = new GPSTracker(this);
         gps_address = et_gps_address.getText().toString();
@@ -140,6 +157,11 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
         note = et_note.getText().toString();
         revise = chk_revise.isChecked();
 
+        // convert bitmap to byte
+        ByteBuffer byteBuffer = ByteBuffer.allocate(bitmap.getByteCount());
+        bitmap.copyPixelsToBuffer(byteBuffer);
+        img = byteBuffer.array();
+        //--------------------------
 
         if (gpsTracker.canGetLocation()) {
 
@@ -159,26 +181,6 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
-    @Override
-    public void onClick(View v) {
-
-        if (v == btn_send) {
-            click_type = 1;
-        } else if (v == btn_save) {
-            click_type = 2;
-        }
-        GetData();
-    }
-
-    public class DataSending extends AsyncTask<Void, Void, Void> {
-        @Override
-        protected Void doInBackground(Void... params) {
-            SendImage.SendData(url, json, img);
-            return null;
-        }
-
-    }
-
     public void SaveAds() {
         advertise = new Advertise();
         advertise.setGps_address(gps_address);
@@ -193,20 +195,12 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
 
     }
 
-    private void uriToBitmap(Uri selectedFileUri) {
+    public class DataSending extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            SendImage.SendData(url, json, img);
+            return null;
+        }
 
-        String[] filePath = {MediaStore.Images.Media.DATA};
-
-        Cursor c = getContentResolver().query(selectedFileUri, filePath, null, null, null);
-
-        c.moveToFirst();
-
-        int columnIndex = c.getColumnIndex(filePath[0]);
-
-        String picturePath = c.getString(columnIndex);
-
-        c.close();
-
-        bitmap = (BitmapFactory.decodeFile(picturePath));
     }
 }

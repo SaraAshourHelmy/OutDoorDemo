@@ -3,19 +3,16 @@ package mediasci.com.outdoordemo;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 
 import mediasci.com.Util.CameraUtil;
@@ -104,10 +101,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             // successfully captured the image
             // display it in image view
+            Log.e("image", "get");
             MoveToAdvertise(Camera);
 
         } else if (requestCode == CameraUtil.GET_FROM_GALLERY && resultCode == RESULT_OK) {
             Uri selectedImage = data.getData();
+            Log.e("image", "get");
             CameraUtil.fileUri = selectedImage;
             MoveToAdvertise(Gallery);
 
