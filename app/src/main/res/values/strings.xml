@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">OutDoorDemo</string>
+    <string name="gps_address">GPS Address</string>
+    <string name="address">Enter Address</string>
+    <string name="title">Enter Title</string>
+    <string name="type">Type</string>
+    <string name="revise">Revise</string>
+    <string name="note">Note</string>
+    <string name="send">Send</string>
+    <string name="save">Save</string>
+    <string name="camera">Camera</string>
+    <string name="gallery">Gallery</string>
+    <string name="upload">Upload</string>
+    <string name="update_all">Update All</string>
+
+    <array name="type_items">
+        <item>owned</item>
+        <item>hired</item>
+        <item>not owned</item>
+        <item>competitor</item>
+    </array>
+</resources>
