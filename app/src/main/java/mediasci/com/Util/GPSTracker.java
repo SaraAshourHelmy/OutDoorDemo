@@ -207,14 +207,14 @@ public class GPSTracker extends Service implements LocationListener {
     }
 
 
-    public String GetLocationName() {
+    public String GetLocationName(double lat,double lng) {
         String location_name = "";
         StringBuilder builder = new StringBuilder();
         try {
 
 
             Geocoder geocoder = new Geocoder(mContext, Locale.getDefault());
-            List<Address> address = geocoder.getFromLocation(latitude, longitude, 1);
+            List<Address> address = geocoder.getFromLocation(lat, lng, 1);
             int maxLines = address.get(0).getMaxAddressLineIndex();
             for (int i = 0; i < maxLines; i++) {
                 String addressStr = address.get(0).getAddressLine(i);

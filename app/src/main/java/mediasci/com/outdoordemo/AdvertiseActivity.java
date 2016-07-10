@@ -16,19 +16,22 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.Toast;
 
-import java.nio.ByteBuffer;
+import java.io.ByteArrayOutputStream;
 
 import mediasci.com.Util.CameraUtil;
 import mediasci.com.Util.DBUtil;
 import mediasci.com.Util.GPSTracker;
+import mediasci.com.Util.GeneralUtil;
 import mediasci.com.Util.SendImage;
 import mediasci.com.models.Advertise;
 import mediasci.com.models.AdvertiseDB;
 
 public class AdvertiseActivity extends AppCompatActivity implements View.OnClickListener {
 
-    public static final String url = "http://192.168.1.236:8084/OutdoorsAds/rest/mobile/uploadSign";
+    public static final String url =
+            "http://192.168.1.236:8084/OutdoorsAds/rest/mobile/uploadSign";
     public static String token =
             "IoUDlBfRCKrNu9kl1h1Ilekj5WhY1nv5UJYbZb69VRyfcrb8H6tHhZ61hwSNT1Wu";
     double latitude = 0, longitude = 0;
@@ -55,6 +58,8 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
     }
 
     private void SetupTools() {
+
+
         img_camera = (ImageView) findViewById(R.id.img_camera);
         et_gps_address = (EditText) findViewById(R.id.et_gps_address);
         et_address = (EditText) findViewById(R.id.et_address);
@@ -67,6 +72,7 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
         btn_send.setOnClickListener(this);
         btn_save.setOnClickListener(this);
 
+        GetGPSInfo() ;
         String[] typeItems = getResources().getStringArray(R.array.type_items);
         spnr_type.setAdapter(new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1
@@ -135,8 +141,19 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
 
     }
 
+    private void GetGPSInfo() {
+        GPSTracker gpsTracker = new GPSTracker(this);
+        if (gpsTracker.canGetLocation()) {
 
-   
+            latitude = gpsTracker.getLatitude();
+            Log.e("lat", latitude + "");
+            longitude = gpsTracker.getLongitude();
+            Log.e("lng", longitude + "");
+            gps_address = gpsTracker.GetLocationName(latitude, longitude);
+            Log.e("address", gps_address);
+            et_gps_address.setText(gps_address);
+        }
+    }
 
     @Override
     public void onClick(View v) {
@@ -147,10 +164,11 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
             click_type = 2;
         }
         GetData();
+
     }
 
     private void GetData() {
-        GPSTracker gpsTracker = new GPSTracker(this);
+
         gps_address = et_gps_address.getText().toString();
         address = et_address.getText().toString();
         title = et_title.getText().toString();
@@ -158,26 +176,30 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
         revise = chk_revise.isChecked();
 
         // convert bitmap to byte
-        ByteBuffer byteBuffer = ByteBuffer.allocate(bitmap.getByteCount());
-        bitmap.copyPixelsToBuffer(byteBuffer);
-        img = byteBuffer.array();
+        //ByteBuffer byteBuffer = ByteBuffer.allocate(bitmap.getByteCount());
+        //bitmap.copyPixelsToBuffer(byteBuffer);
+        //img = byteBuffer.array();
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        img = stream.toByteArray();
         //--------------------------
 
-        if (gpsTracker.canGetLocation()) {
 
-            latitude = gpsTracker.getLatitude();
-            Log.e("lat", latitude + "");
-            longitude = gpsTracker.getLongitude();
-            Log.e("lng", longitude + "");
-        }
         SaveAds();
 
         if (click_type == 1) {
             // send multipart json
             json = DBUtil.BuildJson(advertise);
-            new DataSending().execute();
+            if (GeneralUtil.HaveNetworkConnection(this))
+                new DataSending().execute();
+            else {
+
+                Toast.makeText(this, "No internet Connection", Toast.LENGTH_SHORT)
+                        .show();
+            }
         } else {
             AdvertiseDB.InsertAdvertise(this, advertise);
+            finish();
         }
     }
 
@@ -202,5 +224,14 @@ public class AdvertiseActivity extends AppCompatActivity implements View.OnClick
             return null;
         }
 
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            if (!SendImage.error)
+                finish();
+            else
+                Toast.makeText(AdvertiseActivity.this,
+                        "error occur", Toast.LENGTH_SHORT).show();
+        }
     }
 }

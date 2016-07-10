@@ -7,7 +7,6 @@ import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Currency;
 
 import mediasci.com.Util.DBUtil;
 
@@ -16,12 +15,25 @@ import mediasci.com.Util.DBUtil;
  */
 public class AdvertiseDB {
 
+    public static void DeleteItem(Context context, int id) {
+        SQLiteDatabase db = DBUtil.GetDB(context);
+        try {
+            String query = "delete * from ads";
+            Log.e("id", id + "");
+            int i = db.delete("ads", "id =" + id
+                    , null);//.execSQL(query);
+            Log.e("delete", "done " + i);
+        } catch (Exception e) {
+            Log.e("delete_error", e + "");
+        }
+    }
+
     public static void InsertAdvertise(Context context, Advertise advertise) {
 
         SQLiteDatabase db = DBUtil.GetDB(context);
         try {
 
-            String query = "insert or replace into advertise(gps_address,address,title," +
+            String query = "insert or replace into ads(gps_address,address,title," +
                     "type,revise,note,img,lat,lng) values(?,?,?,?,?,?,?,?,?)";
 
             SQLiteStatement insertState = db.compileStatement(query);
@@ -52,11 +64,12 @@ public class AdvertiseDB {
         Advertise advertise;
         SQLiteDatabase db = DBUtil.GetDB(context);
         try {
-            String query = "select * from advertise";
+            String query = "select * from ads";
             Cursor cursor = db.rawQuery(query, null);
             if (cursor.moveToFirst()) {
                 do {
                     advertise = new Advertise();
+                    advertise.setId(cursor.getInt(cursor.getColumnIndex("id")));
                     advertise.setGps_address(cursor.
                             getString(cursor.getColumnIndex("gps_address")));
                     advertise.setAddress(cursor.getString(cursor.getColumnIndex("address")));

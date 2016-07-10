@@ -16,6 +16,8 @@ import org.apache.http.util.EntityUtils;
  */
 public class SendImage {
 
+    public static boolean error = false;
+
     public static void SendData(String URL, String json, byte[] img) {
         try {
             HttpClient client = new DefaultHttpClient();
@@ -35,8 +37,13 @@ public class SendImage {
             HttpResponse response = client.execute(post);
             HttpEntity httpEntity = response.getEntity();
             String result = EntityUtils.toString(httpEntity);
-            Log.v("result", result);
+            Log.e("result", result);
             Log.e("status", response.getStatusLine().getStatusCode() + "");
+            if (response.getStatusLine().getStatusCode() != 200) {
+                error = true;
+               // Log.e("response", httpEntity.toString() + "");
+            } else
+                error = false;
 
         } catch (Exception e) {
             Log.e("img_error", e + "");
